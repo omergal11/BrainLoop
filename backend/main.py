@@ -4,6 +4,7 @@ Raw SQL Architecture (NO ORM)
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -17,6 +18,9 @@ except Exception:
     pass
 
 app = FastAPI(title="BrainLoop API", version="0.1.0")
+
+# Add Prometheus instrumentator
+Instrumentator().instrument(app).expose(app)
 
 # CORS middleware must be added FIRST, before routes and other middleware
 app.add_middleware(

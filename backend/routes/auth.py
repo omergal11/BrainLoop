@@ -5,8 +5,9 @@ Using Raw SQL queries (NO ORM)
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException
 
-from dependencies import get_db, create_jwt, get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES, hash_password, verify_password
+from dependencies import get_db, create_access_token, create_refresh_token, get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES, hash_password, verify_password
 from schemas import LoginRequest, LoginResponse, UserCreateRequest, UserResponse
+from metrics import LOGIN_FAILURES
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 user_router = APIRouter(tags=["users"])
@@ -63,11 +64,12 @@ def login(payload: LoginRequest, db = Depends(get_db)):
         user_row = cursor.fetchone()
         
         if not user_row or not verify_password(payload.password, user_row['password']):
+            LOGIN_FAILURES.labels(username=payload.username).inc()
             raise HTTPException(status_code=401, detail="Invalid username or password")
         
         user_id = user_row['user_id']
         
-        # If password is in plain text (legacy), hash it and update in database
+        # If password is not hashed, hash it and update in database
         stored_password = user_row['password']
         if not (stored_password.startswith("$2b$") or stored_password.startswith("$2a$")):
             # Legacy plain text password - hash it and update
@@ -82,7 +84,7 @@ def login(payload: LoginRequest, db = Depends(get_db)):
         streak_row = cursor.fetchone()
         
         today = datetime.now().date()
-        yesterday = today.replace(day=today.day - 1) if today.day > 1 else None
+        yesterday = today - timedelta(days=1)
         
         if not streak_row:
             cursor.execute(
@@ -106,9 +108,7 @@ def login(payload: LoginRequest, db = Depends(get_db)):
                     "UPDATE user_strikes SET current_streak_days = %s, longest_streak = %s, last_activity_date = %s WHERE user_id = %s",
                     (new_streak, new_longest, today, user_id)
                 )
-            elif today == last_date:
-                pass
-            else:
+            elif today != last_date:
                 cursor.execute(
                     "UPDATE user_strikes SET current_streak_start = %s, current_streak_days = 1, last_activity_date = %s WHERE user_id = %s",
                     (today, today, user_id)
@@ -116,12 +116,12 @@ def login(payload: LoginRequest, db = Depends(get_db)):
         
         db.commit()
         
-        token_data = {
-            "sub": str(user_id),
-            "username": user_row['username'],
-            "exp": datetime.utcnow().timestamp() + (ACCESS_TOKEN_EXPIRE_MINUTES * 60)
-        }
-        access_token = create_jwt(token_data)
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": str(user_id)},
+            expires_delta=access_token_expires
+        )
+        refresh_token = create_refresh_token(data={"sub": str(user_id)})
         
         return LoginResponse(
             user_id=user_id,
@@ -129,7 +129,8 @@ def login(payload: LoginRequest, db = Depends(get_db)):
             email=user_row['email'],
             birth_date=user_row['birth_date'],
             is_admin=user_row['is_admin'],
-            access_token=access_token
+            access_token=access_token,
+            refresh_token=refresh_token
         )
     finally:
         cursor.close()
@@ -179,6 +180,3 @@ def get_user_streak(user_id: int, db = Depends(get_db), current_user: dict = Dep
         return streak
     finally:
         cursor.close()
-
-
-
