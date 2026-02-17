@@ -2,19 +2,36 @@
 Authentication routes - Login, Register
 Using Raw SQL queries (NO ORM)
 """
+import re
 from datetime import datetime, timedelta
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from dependencies import get_db, create_access_token, create_refresh_token, get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES, hash_password, verify_password
-from schemas import LoginRequest, LoginResponse, UserCreateRequest, UserResponse
+from schemas import LoginRequest, LoginResponse, UserCreateRequest, UserResponse, UpdatePasswordRequest
 from metrics import LOGIN_FAILURES
+from ..main import limiter
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 user_router = APIRouter(tags=["users"])
 
 
+def is_password_strong(password: str) -> bool:
+    """Check if password meets complexity requirements."""
+    if len(password) < 8:
+        return False
+    if not re.search(r'[A-Z]', password):
+        return False
+    if not re.search(r'[a-z]', password):
+        return False
+    if not re.search(r'\d', password):
+        return False
+    if not re.search(r'[@$!%*?&#]', password):
+        return False
+    return True
+
+
 @router.post("/users", response_model=UserResponse, status_code=201)
-def create_user(payload: UserCreateRequest, db = Depends(get_db)) -> dict:
+def create_user(request: Request, payload: UserCreateRequest, db = Depends(get_db)) -> dict:
     """Create a new user """
     cursor = db.cursor()
     
@@ -27,7 +44,6 @@ def create_user(payload: UserCreateRequest, db = Depends(get_db)) -> dict:
         if cursor.fetchone():
             raise HTTPException(status_code=400, detail="Email already exists")
         
-        # Hash password before storing
         hashed_password = hash_password(payload.password)
         cursor.execute(
             "INSERT INTO users (username, email, password, birth_date, is_admin) VALUES (%s, %s, %s, %s, %s)",
@@ -55,7 +71,8 @@ def create_user(payload: UserCreateRequest, db = Depends(get_db)) -> dict:
 
 
 @router.post("/login", response_model=LoginResponse)
-def login(payload: LoginRequest, db = Depends(get_db)):
+@limiter.limit("5/minute")
+def login(request: Request, payload: LoginRequest, db = Depends(get_db)):
     """Login user with raw SQL"""
     cursor = db.cursor()
     
@@ -67,55 +84,59 @@ def login(payload: LoginRequest, db = Depends(get_db)):
             LOGIN_FAILURES.labels(username=payload.username).inc()
             raise HTTPException(status_code=401, detail="Invalid username or password")
         
-        user_id = user_row['user_id']
-        
-        # If password is not hashed, hash it and update in database
-        stored_password = user_row['password']
-        if not (stored_password.startswith("$2b$") or stored_password.startswith("$2a$")):
-            # Legacy plain text password - hash it and update
-            hashed_password = hash_password(payload.password)
-            cursor.execute(
-                "UPDATE users SET password = %s WHERE user_id = %s",
-                (hashed_password, user_id)
+        if not is_password_strong(payload.password):
+            raise HTTPException(
+                status_code=403,
+                detail="Password is too weak. Please update your password."
             )
-            db.commit()
-        
-        cursor.execute("SELECT * FROM user_strikes WHERE user_id = %s", (user_id,))
-        streak_row = cursor.fetchone()
-        
-        today = datetime.now().date()
-        yesterday = today - timedelta(days=1)
-        
-        if not streak_row:
-            cursor.execute(
-                "INSERT INTO user_strikes (user_id, current_streak_start, current_streak_days, longest_streak, last_activity_date) VALUES (%s, %s, %s, %s, %s)",
-                (user_id, today, 1, 1, today)
-            )
-        else:
-            last_date = streak_row['last_activity_date']
-            current_streak = streak_row['current_streak_days']
-            longest_streak = streak_row['longest_streak']
             
-            if last_date is None or current_streak == 0:
-                cursor.execute(
-                    "UPDATE user_strikes SET current_streak_start = %s, current_streak_days = 1, longest_streak = 1, last_activity_date = %s WHERE user_id = %s",
-                    (today, today, user_id)
-                )
-            elif last_date == yesterday:
-                new_streak = current_streak + 1
-                new_longest = max(new_streak, longest_streak)
-                cursor.execute(
-                    "UPDATE user_strikes SET current_streak_days = %s, longest_streak = %s, last_activity_date = %s WHERE user_id = %s",
-                    (new_streak, new_longest, today, user_id)
-                )
-            elif today != last_date:
-                cursor.execute(
-                    "UPDATE user_strikes SET current_streak_start = %s, current_streak_days = 1, last_activity_date = %s WHERE user_id = %s",
-                    (today, today, user_id)
-                )
+        user_id = user_row['user_id']
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": str(user_id)},
+            expires_delta=access_token_expires
+        )
+        refresh_token = create_refresh_token(data={"sub": str(user_id)})
         
+        return LoginResponse(
+            user_id=user_id,
+            username=user_row['username'],
+            email=user_row['email'],
+            birth_date=user_row['birth_date'],
+            is_admin=user_row['is_admin'],
+            access_token=access_token,
+            refresh_token=refresh_token
+        )
+    finally:
+        cursor.close()
+
+
+@router.put("/update-password", response_model=LoginResponse)
+@limiter.limit("5/minute")
+def update_password(request: Request, payload: UpdatePasswordRequest, db = Depends(get_db)):
+    """Update user password and log them in."""
+    cursor = db.cursor()
+    try:
+        cursor.execute("SELECT user_id, username, email, password, birth_date, is_admin FROM users WHERE username = %s", (payload.username,))
+        user_row = cursor.fetchone()
+
+        if not user_row or not verify_password(payload.old_password, user_row['password']):
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+
+        if not is_password_strong(payload.new_password):
+            raise HTTPException(status_code=400, detail="New password does not meet complexity requirements.")
+
+        if payload.old_password == payload.new_password:
+            raise HTTPException(status_code=400, detail="New password must be different from the old one.")
+
+        hashed_password = hash_password(payload.new_password)
+        cursor.execute(
+            "UPDATE users SET password = %s WHERE user_id = %s",
+            (hashed_password, user_row['user_id'])
+        )
         db.commit()
-        
+
+        user_id = user_row['user_id']
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(
             data={"sub": str(user_id)},
@@ -145,38 +166,3 @@ def get_current_user_info(current_user: dict = Depends(get_current_user)):
         "email": current_user['email'],
         "birth_date": current_user['birth_date'],
     }
-
-
-@user_router.get("/user/{user_id}")
-def get_user_by_id(user_id: int, db = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    """Get user by ID"""
-    cursor = db.cursor()
-    try:
-        cursor.execute("SELECT user_id, username, email, birth_date, is_admin FROM users WHERE user_id = %s", (user_id,))
-        user = cursor.fetchone()
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-        return user
-    finally:
-        cursor.close()
-
-
-@user_router.get("/user/{user_id}/streak")
-def get_user_streak(user_id: int, db = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    """Get user streak information"""
-    cursor = db.cursor()
-    try:
-        cursor.execute("SELECT user_id, current_streak_days, longest_streak, current_streak_start, last_activity_date FROM user_strikes WHERE user_id = %s", (user_id,))
-        streak = cursor.fetchone()
-        
-        if not streak:
-            return {
-                "user_id": user_id,
-                "current_streak_days": 0,
-                "longest_streak": 0,
-                "current_streak_start": None,
-                "last_activity_date": None,
-            }
-        return streak
-    finally:
-        cursor.close()

@@ -2,9 +2,13 @@
 Backend API for BrainLoop Quiz Application
 Raw SQL Architecture (NO ORM)
 """
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -12,12 +16,18 @@ load_dotenv()
 from database import create_indexes, get_connection
 from routes import auth, questions, stats, quiz
 
+# Rate Limiter
+limiter = Limiter(key_func=get_remote_address)
+
 try:
     create_indexes()
 except Exception:
     pass
 
 app = FastAPI(title="BrainLoop API", version="0.1.0")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 
 # Add Prometheus instrumentator
 Instrumentator().instrument(app).expose(app)
