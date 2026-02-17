@@ -13,7 +13,7 @@ from passlib.context import CryptContext
 from database import get_connection, DB_TYPE
 
 # Load from environment variables
-ALGORITHM = os.getenv("ALGORITHM", "RS256")
+ALGORITHM = "RS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
 
