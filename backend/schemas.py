@@ -82,7 +82,7 @@ class TopicPublicSchema(BaseModel):
 class UserCreateRequest(BaseModel):
     username: str = Field(..., pattern=r"^[A-Za-z0-9]+$")
     email: EmailStr
-    password: str = Field(..., pattern=r"^\d{6}$")
+    password: str
     birthdate: date
 
 
@@ -127,6 +127,7 @@ class LoginResponse(BaseModel):
     birth_date: date
     is_admin: bool
     access_token: str
+    refresh_token: str
     token_type: str = "bearer"
 
 
