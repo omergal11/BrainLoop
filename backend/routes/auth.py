@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from dependencies import get_db, create_access_token, create_refresh_token, get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES, hash_password, verify_password
 from schemas import LoginRequest, LoginResponse, UserCreateRequest, UserResponse, UpdatePasswordRequest
 from metrics import LOGIN_FAILURES
-from ..main import limiter
+from limiter import limiter
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 user_router = APIRouter(tags=["users"])
@@ -157,12 +157,7 @@ def update_password(request: Request, payload: UpdatePasswordRequest, db = Depen
         cursor.close()
 
 
-@router.get("/me")
+@router.get("/me", response_model=UserResponse)
 def get_current_user_info(current_user: dict = Depends(get_current_user)):
     """Get current authenticated user info"""
-    return {
-        "user_id": current_user['user_id'],
-        "username": current_user['username'],
-        "email": current_user['email'],
-        "birth_date": current_user['birth_date'],
-    }
+    return current_user

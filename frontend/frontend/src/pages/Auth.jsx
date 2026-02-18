@@ -6,6 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Brain, LogIn, UserPlus, ArrowLeft, KeyRound } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
+
 export default function Auth() {
   const [mode, setMode] = useState('login'); // login, signup, updatePassword
   const [form, setForm] = useState({ username: '', email: '', password: '', birthdate: '' });
@@ -64,7 +66,9 @@ export default function Auth() {
   const handleLogin = async () => {
     try {
       setLoading(true);
-      const res = await fetch('http://localhost:8000/auth/login', {
+      setError(''); // Clear previous errors
+
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -73,22 +77,22 @@ export default function Auth() {
         }),
       });
 
+      const data = await res.json().catch(() => ({}));
+
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
         if (res.status === 403) {
-          // Weak password detected, switch to update mode
           setError(data.detail || 'Your password is weak. Please create a new one.');
           setMode('updatePassword');
-        } else {
-          throw new Error(data.detail || 'Login failed');
+          return; 
         }
-      } else {
-        const data = await res.json();
-        authLogin(data); // Use context to set auth state
-        navigate('/home');
+        throw new Error(data.detail || 'Login failed');
       }
+
+      authLogin(data);
+      navigate('/home');
+
     } catch (err) {
-      setError(err.message || 'Login failed');
+      setError(err.message || 'An unexpected error occurred.');
     } finally {
       setLoading(false);
     }
@@ -98,7 +102,9 @@ export default function Auth() {
     if (hasSignupErrors) return;
     try {
       setLoading(true);
-      const res = await fetch('http://localhost:8000/auth/users', {
+      setError('');
+
+      const res = await fetch(`${API_BASE_URL}/auth/users`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -109,17 +115,16 @@ export default function Auth() {
         }),
       });
 
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
         throw new Error(data.detail || 'Signup failed');
       }
 
-      const data = await res.json();
       setMode('login');
       setForm({ username: data.username, email: '', password: '', birthdate: '' });
-      setError(''); // Clear previous errors
+
     } catch (err) {
-      setError(err.message || 'Signup failed');
+      setError(err.message || 'An unexpected error occurred.');
     } finally {
       setLoading(false);
     }
@@ -143,8 +148,7 @@ export default function Auth() {
 
     try {
       setLoading(true);
-      // This endpoint needs to be created in the backend
-      const res = await fetch('http://localhost:8000/auth/update-password', {
+      const res = await fetch(`${API_BASE_URL}/auth/update-password`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -154,18 +158,16 @@ export default function Auth() {
         }),
       });
 
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
         throw new Error(data.detail || 'Failed to update password.');
       }
       
-      const data = await res.json();
-      // On successful password update, log the user in
       authLogin(data);
       navigate('/home');
 
     } catch (err) {
-      setError(err.message || 'Failed to update password.');
+      setError(err.message || 'An unexpected error occurred.');
     } finally {
       setLoading(false);
     }

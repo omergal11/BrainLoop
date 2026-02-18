@@ -386,61 +386,35 @@ challenging topics)</li>
 </ul>
 <p><strong>Software</strong></p>
 <ul>
-<li><strong>Python</strong>: 3.9 or higher<br />
+<li><strong>Docker</strong>: Latest version installed<br />
 </li>
-<li><strong>Node.js</strong>: 16 or higher (for the frontend)<br />
-</li>
-<li><strong>MySQL Server</strong>: local or remote instance<br />
+<li><strong>Docker Compose</strong>: Latest version installed<br />
 </li>
 <li><strong>Browser</strong>: modern browser (Chrome, Firefox,
 Edge)</li>
 </ul>
 <hr />
-<h2 id="full-installation-instructions">📋 Full Installation
-Instructions</h2>
-<h3 id="step-0-run-with-makefile-the-easiest-way">Step 0 – Run with
-Makefile (The Easiest Way!)</h3>
-<h4 id="windows-installing-gnu-make">🪟 Windows – Installing GNU
-Make</h4>
-<p>If <code>make</code> is not configured, choose one of the following
-options:</p>
-<p><strong>Option 1 – Install via winget (fastest)</strong></p>
+<h2 id="full-installation-instructions">📋 Getting Started with Docker</h2>
+<h3 id="step-1-start-services">Step 1 – Start All Services</h3>
+<p>Open a terminal/command prompt in the BrainLoop project folder and run:</p>
 <div class="sourceCode" id="cb1"><pre
-class="sourceCode powershell"><code class="sourceCode powershell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>winget install GnuWin32<span class="op">.</span><span class="fu">Make</span></span></code></pre></div>
-<p><strong>Option 2 – Manual installation</strong> 1. Download the
-installer from: <a
-href="https://sourceforge.net/projects/gnuwin32/files/make/">GnuWin32</a>
-2. Run the installer</p>
-<p>If you already installed but <code>make</code> is not recognized, add
-to your terminal:</p>
-<p><strong>Verify it works:</strong></p>
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>docker-compose -f docker-compose.dev.yml up --build</span></code></pre></div>
+<p><strong>Docker automatically handles all setup!</strong></p>
+<hr />
+<h3 id="step-2-access-the-application">Step 2 – Access Your Apps</h3>
+<p>After startup completes (you'll see "Application startup complete" in the logs):</p>
+<ul>
+<li><strong>Frontend App:</strong> http://localhost:5173</li>
+<li><strong>API Documentation:</strong> http://localhost:8000/docs</li>
+<li><strong>Health Check:</strong> http://localhost:8000/health</li>
+</ul>
+<hr />
+<h3 id="step-3-stop-services">Step 3 – Stop Services</h3>
+<p>Press <code>Ctrl+C</code> in the terminal, or run:</p>
 <div class="sourceCode" id="cb2"><pre
-class="sourceCode powershell"><code class="sourceCode powershell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="va">$env</span><span class="op">:</span><span class="va">Path</span> <span class="op">+=</span> <span class="st">&quot;;C:\Program Files (x86)\GnuWin32\bin&quot;</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>make <span class="op">--</span>version</span></code></pre></div>
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>docker-compose -f docker-compose.dev.yml down</span></code></pre></div>
 <hr />
-<h3 id="step-b-configure-.env-file">Step B – Configure <code>.env</code>
-File</h3>
-<div class="sourceCode" id="cb3"><pre
-class="sourceCode powershell"><code class="sourceCode powershell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>make setup</span></code></pre></div>
-<p>This will automatically create the <code>.env</code> file in the
-<code>backend/</code> folder with all required values.</p>
-<hr />
-<h3 id="running-the-application">Running the Application</h3>
-<p>✅ <strong>MySQL is already installed with all the
-data!</strong><br />
-✅ <strong>Now let’s run the application:</strong></p>
-<h4 id="windows">🪟 Windows</h4>
-<p>In a PowerShell window, run:</p>
-<div class="sourceCode" id="cb4"><pre
-class="sourceCode powershell"><code class="sourceCode powershell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>make install     <span class="co"># Install dependencies</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>make <span class="fu">start</span>       <span class="co"># Run both servers in separate windows</span></span></code></pre></div>
-<h4 id="maclinux">🍎 Mac/Linux</h4>
-<p>In a terminal, run:</p>
-<div class="sourceCode" id="cb5"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /path/to/BrainLoop</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> install     <span class="co"># Install dependencies</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> start       <span class="co"># Run both servers</span></span></code></pre></div>
-<hr />
+
 <h3 id="accessing-the-application">🌐 Accessing the Application</h3>
 <table>
 <thead>
@@ -475,7 +449,7 @@ Permissions</h2>
 <li><strong>Standard User (Student)</strong> – solves questions, tracks
 their own progress.<br />
 </li>
-<li><strong>Admin</strong> – has access to system‑wide analytics and
+<li><strong>Admin</strong> – has access to system-wide analytics and
 (optionally) content management.</li>
 </ul>
 <h3 id="demo-accounts-for-testing">2.1 Demo Accounts (for testing)</h3>
@@ -512,7 +486,7 @@ may be changed in your deployment:</p>
 </ul>
 <hr />
 <h3 id="registration-rules">2.2 Registration Rules</h3>
-<p>Users can also self‑register via the <strong>Sign Up</strong> tab on
+<p>Users can also self-register via the <strong>Sign Up</strong> tab on
 the Auth page:</p>
 <ul>
 <li><strong>Username</strong>
@@ -526,7 +500,11 @@ characters)</li>
 </ul></li>
 <li><strong>Password</strong>
 <ul>
-<li>Exactly six digits (e.g., <code>123456</code>)</li>
+<li>Minimum 8 characters</li>
+<li>At least one uppercase letter (A-Z)</li>
+<li>At least one lowercase letter (a-z)</li>
+<li>At least one digit (0-9)</li>
+<li>At least one special character: <code>@$!%*?&#</code></li>
 </ul></li>
 <li><strong>Birthdate</strong>
 <ul>
@@ -541,24 +519,21 @@ registration cannot proceed.</p>
 <li>After login, the backend returns a <strong>JWT access
 token</strong>.</li>
 <li>The frontend stores this token and user metadata in
-<code>localStorage</code>, e.g.:
+<code>localStorage</code>:
 <ul>
-<li><code>brainloop_token</code></li>
-<li><code>brainloop_user_id</code></li>
-<li><code>brainloop_user</code></li>
-<li><code>brainloop_email</code></li>
-<li><code>brainloop_birth_date</code></li>
-<li><code>brainloop_is_admin</code></li>
+<li><code>brainloop_token</code> – JWT access token</li>
+<li><code>brainloop_user_id</code> – User ID</li>
+<li><code>brainloop_is_admin</code> – Admin flag (true/false)</li>
 </ul></li>
 <li>All protected API calls include the token in the
 <code>Authorization: Bearer &lt;token&gt;</code> header.</li>
 </ul>
 <p><strong>Token expiry</strong></p>
 <ul>
-<li>Tokens have a limited lifetime (configured in the backend).</li>
+<li>Tokens expire after <strong>30 minutes</strong> (configurable via backend environment variable).</li>
 <li>When a token is expired or invalid, API calls fail and the frontend
-shows a <strong>“token expired”</strong> modal.</li>
-<li>The user is then asked to log in again.</li>
+shows a <strong>"token expired"</strong> modal.</li>
+<li>The user is then asked to log in again to obtain a fresh token.</li>
 </ul>
 <p><strong>Logout</strong></p>
 <ul>
@@ -571,7 +546,7 @@ entries from <code>localStorage</code> and navigates to the Auth page
 
 </div>
 <h2 id="user-guide-step-by-step">3. User Guide – Step by Step</h2>
-<h3 id="login-signup-auth-page-auth">3.1 Login &amp; Sign‑up (Auth Page,
+<h3 id="login-signup-auth-page-auth">3.1 Login &amp; Sign-up (Auth Page,
 <code>/auth</code>)</h3>
 <p><img src="IMAGES/screenshot-auth-login.png" alt="Login screen – Auth page (login tab)" width="650" /></p>
 <p><strong>Login tab</strong></p>
@@ -579,11 +554,11 @@ entries from <code>localStorage</code> and navigates to the Auth page
 <li>Fields:
 <ul>
 <li>Username</li>
-<li>Password (6 digits)</li>
+<li>Password</li>
 </ul></li>
 <li>Action:
 <ul>
-<li>Enter your credentials and click <strong>“Login”</strong>.</li>
+<li>Enter your credentials and click <strong>Login</strong>.</li>
 </ul></li>
 <li>On success:
 <ul>
@@ -599,20 +574,20 @@ entries from <code>localStorage</code> and navigates to the Auth page
 <ul>
 <li>Username</li>
 <li>Email</li>
-<li>Password (6 digits)</li>
+<li>Password</li>
 <li>Birthdate</li>
 </ul></li>
 <li>Validation:
 <ul>
 <li>Username: letters/digits only.</li>
 <li>Email: valid format.</li>
-<li>Password: 6 digits.</li>
+<li>Password: minimum 8 characters, must include uppercase, lowercase, digit, and special character (<code>@$!%*?&#</code>).</li>
 <li>Birthdate: real date, not in the future.</li>
 </ul></li>
 <li>On success:
 <ul>
 <li>Account is created.</li>
-<li>You are switched back to the <strong>Login</strong> tab pre‑filled
+<li>You are switched back to the <strong>Login</strong> tab pre-filled
 with your username.</li>
 </ul></li>
 </ul>
@@ -660,7 +635,7 @@ redirects you to the <strong>Auth</strong> page (see Section 3.1).</li>
 <ul>
 <li>Greeting:
 <ul>
-<li>“Hello, {username}! 🚀”</li>
+<li>Hello, {username}! 👋</li>
 </ul></li>
 </ul>
 <p><img src="IMAGES/screenshot-home-logged-in.png" alt="Home page when logged in – greeting and topic selection" width="650" /></p>
@@ -678,7 +653,7 @@ Changing type resets selected topics.</li>
 <li><strong>Step 2 – Choose Topics</strong>
 <ul>
 <li>After type is selected, available topics are loaded from the backend
-(e.g. Data Structures, Algorithms, Databases).</li>
+(e.g.┬áData Structures, Algorithms, Databases).</li>
 <li>You can select multiple topics.</li>
 <li>If there are no topics for that type, a message is shown.</li>
 </ul></li>
@@ -687,7 +662,7 @@ Changing type resets selected topics.</li>
 <ul>
 <li><strong>Step 3 – Start Practice</strong>
 <ul>
-<li><strong>Start Practice 🚀</strong> button becomes enabled when:
+<li><strong>Start Practice 👋</strong> button becomes enabled when:
 <ul>
 <li>at least one topic is selected, and</li>
 <li>question type is selected.</li>
@@ -712,7 +687,7 @@ implicitly when you complete the quiz (via
 <ul>
 <li>Displays:
 <ul>
-<li>Practice title (“Practice mode 🚀”)</li>
+<li>Practice title ("Practice mode 👋")</li>
 <li><strong>Question X of Y</strong></li>
 <li>Progress bar (0–100%)</li>
 <li>One question at a time.</li>
@@ -730,15 +705,15 @@ implicitly when you complete the quiz (via
 <ul>
 <li>Problem description + code snippet</li>
 </ul></li>
-<li><strong>Fill‑in / Text</strong>
+<li><strong>Fill-in / Text</strong>
 <ul>
-<li>Free‑text answer field</li>
+<li>Free-text answer field</li>
 </ul></li>
 </ul>
 <p><strong>Answering</strong></p>
 <ol type="1">
 <li>Select or type your answer.</li>
-<li>Click <strong>“Check Answer”</strong>.</li>
+<li>Click <strong>"Check Answer"</strong>.</li>
 <li>The system:
 <ul>
 <li>Sends your answer to <code>/submit</code>.</li>
@@ -752,12 +727,12 @@ implicitly when you complete the quiz (via
 </ol>
 <p><img src="IMAGES/screenshot-quiz-feedback-incorrect.png" alt="Quiz feedback – incorrect answer with correct solution shown" width="650" /></p>
 <ol start="4" type="1">
-<li>Click <strong>Next Question →</strong> to continue, or if it’s the
-last question, <strong>“View Results 🎉”</strong>.</li>
+<li>Click <strong>Next Question</strong> to continue, or if it's the
+last question, <strong>"View Results"</strong>.</li>
 </ol>
 <p><strong>Skip to End (shortcut)</strong></p>
 <ul>
-<li>Button: “⏭️ Skip to End (mark remaining as wrong)”.</li>
+<li>Button: <strong>⏭️ Skip to End</strong> (mark remaining as wrong).</li>
 <li>Behavior:
 <ul>
 <li>Marks all remaining unanswered questions as incorrect for
@@ -782,14 +757,14 @@ statistics.</li>
 on performance. - <strong>Topic Breakdown</strong> - Each topic with: -
 Colored bar (green/yellow/red depending on accuracy) - Percentage for
 that topic. - <strong>Recommended Topics</strong> - Shows the weakest
-topics based on this session’s performance, so users know what to
+topics based on this session's performance, so users know what to
 practice next.</p>
 <p><img src="IMAGES/screenshot-results-recommendations.png" alt="Results screen – recommended topics section" width="650" />
 - <strong>Actions</strong> - <strong>Try Again</strong> – restart the
 quiz with new random questions (same type/topics). - <strong>Back to
 Home</strong> – return to <code>/home</code>. - <strong>View Your
 Stats</strong> – navigate to the <strong>Statistics</strong> page
-(<code>/stats</code>) to see your long‑term analytics.</p>
+(<code>/stats</code>) to see your long-term analytics.</p>
 <hr />
 <h3 id="profile-page-profile">3.6 Profile Page
 (<code>/profile</code>)</h3>
@@ -802,7 +777,7 @@ Stats</strong> – navigate to the <strong>Statistics</strong> page
 </ul></li>
 <li>Layout:
 <ul>
-<li>Header area with avatar and (if admin) “ADMIN” badge.</li>
+<li>Header area with avatar and (if admin) <strong>ADMIN</strong> badge.</li>
 <li>Cards summarizing:
 <ul>
 <li>Username</li>
@@ -858,7 +833,7 @@ actual schema (from <code>brainloop_db.sql</code>) is:</p>
 </li>
 <li><code>question_text</code><br />
 </li>
-<li><code>type</code> (e.g. <code>code</code>,
+<li><code>type</code> (e.g.┬á<code>code</code>,
 <code>choose</code>)<br />
 </li>
 <li><code>option_a</code>, <code>option_b</code>, <code>option_c</code>,
@@ -885,8 +860,6 @@ actual schema (from <code>brainloop_db.sql</code>) is:</p>
 <li><code>session_id</code> (PK)<br />
 </li>
 <li><code>user_id</code> (FK → <code>Users.user_id</code>)<br />
-</li>
-<li><code>start_time</code><br />
 </li>
 <li><code>end_time</code><br />
 </li>
@@ -927,8 +900,8 @@ actual database.</p>
 </ul>
 <p>This design supports:</p>
 <ul>
-<li>Per‑user and per‑topic analytics</li>
-<li>Session‑level tracking</li>
+<li>Per-user and per-topic analytics</li>
+<li>Session-level tracking</li>
 <li>Daily streaks and admin reporting</li>
 </ul>
 <hr />
@@ -996,7 +969,7 @@ class="sourceCode sql"><code class="sourceCode sql"><span id="cb8-1"><a href="#c
 <ul>
 <li>Same join and grouping as above.</li>
 <li>Orders by <code>accuracy ASC, total DESC</code>.</li>
-<li>Returns the lowest‑accuracy topic.</li>
+<li>Returns the lowest-accuracy topic.</li>
 </ul>
 <div class="sourceCode" id="cb9"><pre
 class="sourceCode sql"><code class="sourceCode sql"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> </span>
@@ -1049,7 +1022,7 @@ class="sourceCode sql"><code class="sourceCode sql"><span id="cb10-1"><a href="#
 <li><code>duration</code> ASC (fastest)</li>
 <li><code>session_id DESC</code> (most recent).</li>
 </ul></li>
-<li>Returns the “best” single session.</li>
+<li>Returns the "best" single session.</li>
 </ul></li>
 </ul>
 <div class="sourceCode" id="cb11"><pre
@@ -1070,7 +1043,7 @@ class="sourceCode sql"><code class="sourceCode sql"><span id="cb11-1"><a href="#
 </ul>
 <p><img src="IMAGES/screenshot-stats-user-last-best.png" alt="User statistics – last and best session cards" width="500" /></p>
 <ul>
-<li><p><strong>Per‑topic breakdown</strong></p>
+<li><p><strong>Per-topic breakdown</strong></p>
 <ul>
 <li>Joins <code>User_Answers</code> → <code>Questions</code> →
 <code>Topics</code>.</li>
@@ -1080,8 +1053,8 @@ class="sourceCode sql"><code class="sourceCode sql"><span id="cb11-1"><a href="#
 <li>Stores <code>total</code>, <code>correct</code>, and derived
 <code>accuracy</code>.</li>
 </ul></li>
-<li>The <strong>Statistics</strong> page uses this to display the “All
-Topics” grid.</li>
+<li>The <strong>Statistics</strong> page uses this to display the "All
+Topics" grid.</li>
 </ul>
 <div class="sourceCode" id="cb12"><pre
 class="sourceCode sql"><code class="sourceCode sql"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> </span>
@@ -1191,7 +1164,7 @@ class="sourceCode sql"><code class="sourceCode sql"><span id="cb15-1"><a href="#
 <ul>
 <li><p><strong>Topics with highest proficiency</strong></p>
 <ul>
-<li>Same aggregation as “most challenging”.</li>
+<li>Same aggregation as "most challenging".</li>
 <li>Orders by <code>success_rate DESC</code>.</li>
 </ul>
 <div class="sourceCode" id="cb16"><pre
@@ -1369,21 +1342,21 @@ the Home page.</p>
 <h2 id="analytics-pages-statistics-admin-insights">6. Analytics Pages
 (Statistics &amp; Admin Insights)</h2>
 <h3 id="personal-analytics-statistics-page-stats">6.1 Personal
-Analytics: “Statistics” Page (<code>/stats</code>)</h3>
-<p>The <strong>Statistics</strong> page shows a logged‑in user a summary
+Analytics: "Statistics" Page (<code>/stats</code>)</h3>
+<p>The <strong>Statistics</strong> page shows a logged-in user a summary
 of their <strong>overall learning performance</strong>.</p>
 <p><strong>Access</strong></p>
 <ul>
 <li>Only when logged in.</li>
-<li>Open via the <strong>“Statistics”</strong> icon in the header.</li>
+<li>Open via the <strong>"Statistics"</strong> icon in the header.</li>
 </ul>
 <p><strong>Data refresh</strong></p>
 <ul>
 <li>Automatically loads the latest stats on page load.</li>
-<li>A <strong>“Refresh”</strong> button lets the user reload
+<li>A <strong>"Refresh"</strong> button lets the user reload
 manually.</li>
 <li>When the browser tab becomes visible again (e.g., after finishing a
-quiz and coming back), the page may auto‑refresh.</li>
+quiz and coming back), the page may auto-refresh.</li>
 </ul>
 <p><strong>Overall performance</strong></p>
 <ul>
@@ -1421,11 +1394,11 @@ shortest duration.</li>
 </ul></li>
 <li><strong>All Topics section</strong>
 <ul>
-<li>Per‑topic cards showing:
+<li>Per-topic cards showing:
 <ul>
 <li>Topic name</li>
-<li>Progress bar 0–100%</li>
-<li>“X of Y correct”</li>
+<li>Progress bar 0–30–60–100%</li>
+<li>"X of Y correct"</li>
 </ul></li>
 </ul></li>
 </ul>
@@ -1436,14 +1409,14 @@ selection screen.</li>
 </ul>
 <hr />
 <h3 id="admin-analytics-admin-insights-page-adminstats">6.2 Admin
-Analytics: “Admin Insights” Page (<code>/admin/stats</code>)</h3>
+Analytics: "Admin Insights" Page (<code>/admin/stats</code>)</h3>
 <p>The <strong>Admin Insights</strong> page shows
-<strong>system‑wide</strong> analytics, based on all users’
+<strong>system-wide</strong> analytics, based on all users'
 activity.</p>
 <p><strong>Access</strong></p>
 <ul>
 <li>Only for admins (<code>is_admin = true</code>).</li>
-<li>Non‑admin users are redirected to <code>/home</code>.</li>
+<li>Non-admin users are redirected to <code>/home</code>.</li>
 </ul>
 <p><strong>Summary metrics</strong></p>
 <ul>

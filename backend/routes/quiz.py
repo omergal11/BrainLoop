@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from dependencies import get_db, get_current_user
-from schemas import SubmitAnswerRequest, SubmitAnswerResponse, StartSessionRequest, StartSessionResponse, CompleteSessionRequest
+from schemas import SubmitAnswerRequest, SubmitAnswerResponse, CompleteSessionRequest
 
 router = APIRouter(prefix="", tags=["quiz"])
 
