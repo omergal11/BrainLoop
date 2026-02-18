@@ -10,8 +10,9 @@ A comprehensive quiz application with advanced analytics, user authentication, a
 
 **Key Highlights:**
 - 🔐 Secure JWT authentication with bcrypt password hashing
+- �️ Advanced Security: Rate Limiting (DoS protection) & Role-Based Access Control (RBAC)
 - 📊 Advanced analytics with complex SQL queries
-- 🐳 Docker support for easy deployment
+- 🐳 Docker support for easy deployment (Development & Production configs)
 - ✅ CI/CD pipeline with automated testing
 - 📝 Comprehensive documentation
 - 🧪 Unit tests and code quality checks
@@ -39,39 +40,19 @@ A comprehensive quiz application with advanced analytics, user authentication, a
 
 ## 🐳 Running with Docker (Recommended - Easiest)
 
-### 1. Create Environment File
-
-Create a `.env` file in the project root directory:
-
-**Windows (PowerShell):**
-```powershell
-@"
-MYSQL_PASSWORD=rootpassword
-SECRET_KEY=dev-secret-key-change-in-production
-"@ | Out-File -Encoding UTF8 .env
-```
-
-**Mac/Linux (Bash):**
-```bash
-cat > .env << EOF
-MYSQL_PASSWORD=rootpassword
-SECRET_KEY=dev-secret-key-change-in-production
-EOF
-```
-
-Or manually create the file with:
-```
-MYSQL_PASSWORD=rootpassword
-SECRET_KEY=dev-secret-key-change-in-production
-```
-
-### 2. Start All Services
+### 1. Start All Services
 
 ```bash
 docker-compose -f docker-compose.dev.yml up --build
 ```
 
-### 3. Access the Application
+This will automatically:
+- Initialize MySQL database with seed data
+- Build backend with FastAPI
+- Build frontend with React + Vite
+- Create all necessary containers and networks
+
+### 2. Access the Application
 
 Once all services are running:
 - **Frontend:** http://localhost:5173
@@ -79,7 +60,7 @@ Once all services are running:
 - **API Documentation:** http://localhost:8000/docs
 - **Health Check:** http://localhost:8000/health
 
-### 4. Stop Services
+### 3. Stop Services
 
 ```bash
 docker-compose -f docker-compose.dev.yml down
@@ -87,103 +68,18 @@ docker-compose -f docker-compose.dev.yml down
 
 **Note:** First startup takes 1-2 minutes as Docker builds images and initializes the database.
 
+**Optional:** To customize environment variables, create a `.env` file in the project root:
+```env
+MYSQL_PASSWORD=your_custom_password
+SECRET_KEY=your-custom-secret-key
+```
+Otherwise, sensible defaults are used automatically.
+
 ---
 
-## 💻 Local Development Setup (Windows/Mac/Linux)
+## � For Local Development (Without Docker)
 
-### Option A: Using Makefile (Recommended)
-
-**Windows:**
-```powershell
-# Add GNU tools to PATH first (if not installed)
-$env:Path += ";C:\Program Files (x86)\GnuWin32\bin"
-
-# Then run:
-make setup     # Create .env file (edit with your MySQL password!)
-make install   # Install all dependencies
-make start     # Start backend + frontend
-```
-
-**Mac/Linux:**
-```bash
-make setup     # Create .env file (edit with your MySQL password!)
-make install   # Install all dependencies
-make start     # Start backend + frontend servers
-```
-
-### Option B: Manual Setup
-
-**1. Install Backend Dependencies**
-
-Windows (PowerShell):
-```powershell
-cd backend
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-```
-
-Mac/Linux:
-```bash
-cd backend
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
-
-**2. Create Backend .env File**
-
-Create `backend/.env`:
-```
-DB_TYPE=mysql
-MYSQL_HOST=localhost
-MYSQL_USER=root
-MYSQL_PASSWORD=your_mysql_password_here
-MYSQL_DB=brainloop
-SECRET_KEY=your-super-secret-key-change-in-production
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-```
-
-**3. Setup MySQL Database**
-
-```bash
-mysql -u root -p < db/brainloop.sql
-```
-
-**4. Start Backend**
-
-Windows (PowerShell):
-```powershell
-cd backend
-.\venv\Scripts\Activate.ps1
-python main.py
-```
-
-Mac/Linux:
-```bash
-cd backend
-source venv/bin/activate
-python main.py
-```
-
-Backend runs at: http://localhost:8000
-
-**5. Install Frontend Dependencies**
-
-```bash
-cd frontend/frontend
-npm install
-```
-
-**6. Start Frontend**
-
-```bash
-cd frontend/frontend
-npm run dev
-```
-
-Frontend runs at: http://localhost:5173
+If you need to run the project locally without Docker, see [SOFTWARE_DOCUMENTATION.md](SOFTWARE_DOCUMENTATION.md#local-development-setup) for detailed setup instructions (virtual environments, database configuration, etc.).
 
 ---
 
@@ -199,12 +95,12 @@ Frontend runs at: http://localhost:5173
    ```
    The `-v` flag removes volumes (clears database).
 
-2. Verify `.env` file exists and has correct `MYSQL_PASSWORD`.
-
-3. Restart:
+2. Restart:
    ```bash
    docker-compose -f docker-compose.dev.yml up --build
    ```
+
+If you customized environment variables in a `.env` file, verify it has correct `MYSQL_PASSWORD`.
 
 Or use the reset script:
 
@@ -248,61 +144,6 @@ Check logs:
 docker-compose -f docker-compose.dev.yml logs -f
 ```
 
-### Local Development Issues
-
-**Module not found errors in backend**
-
-Ensure virtual environment is activated:
-
-Windows:
-```powershell
-cd backend
-.\venv\Scripts\Activate.ps1
-```
-
-Mac/Linux:
-```bash
-cd backend
-source venv/bin/activate
-```
-
-**Frontend won't start**
-
-Clear node_modules and reinstall:
-```bash
-cd frontend/frontend
-rm -rf node_modules package-lock.json
-npm install
-npm run dev
-```
-
-**Database errors**
-
-Reset database:
-```bash
-mysql -u root -p < db/brainloop.sql
-```
-
----
-
-## 🧪 Running Tests
-
-**Backend Tests:**
-
-Windows (PowerShell):
-```powershell
-cd backend
-.\venv\Scripts\Activate.ps1
-pytest
-```
-
-Mac/Linux:
-```bash
-cd backend
-source venv/bin/activate
-pytest
-```
-
 ---
 
 ## 📂 Project Structure
@@ -313,6 +154,7 @@ BrainLoop/
 │   ├── routes/          # API endpoints
 │   ├── tests/           # Unit tests
 │   ├── main.py          # Application entry point
+│   ├── limiter.py       # Rate limiting middleware
 │   ├── database.py      # Database setup
 │   ├── schemas.py       # Pydantic schemas
 │   └── requirements.txt  # Python dependencies
@@ -323,7 +165,8 @@ BrainLoop/
 │       └── package.json # Node dependencies
 ├── db/                  # Database scripts
 │   └── brainloop.sql    # Database schema
-├── docker-compose.dev.yml  # Development Docker setup
+├── docker-compose.yml              # Production configuration
+├── docker-compose.dev.yml          # Development configuration
 └── .env.example         # Environment variables template
 ```
 
@@ -359,11 +202,60 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## ✨ Features
 
-### Security & Authentication
-- 🔐 JWT authentication with 30-minute token expiry
-- 🔒 Bcrypt password hashing (secure password storage)
-- 🛡️ Environment-based configuration (no secrets in code)
-- 🔑 Role-based access control (admin/user)
+### 🛡️ Security & Reliability (SRE Focus)
+- **Identity & Access:** Modern JWT authentication using `PyJWT` with secure RBAC (Role-Based Access Control)
+- **Infrastructure Protection:** Built-in Rate Limiting to mitigate Brute-Force and DoS attacks
+- **Database Security:** 100% Parameterized SQL queries to prevent SQL Injection
+- **Secrets Management:** Environment-based configuration (no credentials in code)
+- **Token Security:** 30-minute JWT token expiry with automatic refresh
+- **Observability:** (Coming Soon) Real-time monitoring with Prometheus & Grafana
+
+### Security Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    CLIENT BROWSER                            │
+│              (React Frontend - HTTPS)                         │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         │ HTTP Request
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  API GATEWAY LAYER                           │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │        Rate Limiter (DoS Protection)                 │   │
+│  │  - Request throttling per IP/user                    │   │
+│  │  - Brute-force detection                             │   │
+│  └──────────────────────────────────────────────────────┘   │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│               AUTHENTICATION LAYER                           │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │     JWT Token Validation (30-min expiry)             │   │
+│  │  - Token signature verification                      │   │
+│  │  - Role-Based Access Control (RBAC)                  │   │
+│  │  - Bcrypt password verification                      │   │
+│  └──────────────────────────────────────────────────────┘   │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│              APPLICATION LAYER (FastAPI)                    │
+│  - Parameterized SQL queries (SQL Injection Protection)     │
+│  - Request validation & sanitization                        │
+│  - Error handling & logging                                 │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│              DATABASE LAYER (MySQL)                         │
+│  - Parameterized prepared statements                        │
+│  - Indexed queries for performance                          │
+│  - Secure credential storage (bcrypt hashes)                │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ### Quiz & Learning
 - 📝 Multiple question types (multiple-choice, code-writing)
@@ -379,10 +271,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### Technical Features
 - ⚡ High-performance raw SQL queries (no ORM overhead)
+- �️ Parameterized SQL queries protecting against injection attacks
 - 🗄️ 6 database tables with 100K+ data rows
 - 🧠 15+ complex SQL queries (JOINs, GROUP BY, aggregations)
 - 📊 Strategic database indexes for optimization
-- 🐳 Docker containerization support
+- 🐳 Docker containerization (development & production configs)
 - ✅ CI/CD pipeline with automated testing
 - 📝 Comprehensive API documentation (FastAPI auto-docs)
 
@@ -500,7 +393,7 @@ pytest tests/ --cov=. --cov-report=html
 
 ---
 
-**Version:** 1.0.0 | **Last Updated:** January 2026 | **Status:** ✅ Production Ready
+**Version:** 1.0.0 | **Last Updated:** February 2026 | **Status:** ✅ Production Ready
 
 ## 📸 Screenshots
 

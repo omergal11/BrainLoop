@@ -8,7 +8,7 @@ import {
 import TopicCard from '@/components/TopicCard';
 import QuestionTypeCard from '@/components/QuestionTypeCard';
 import Logo from '@/components/Logo';
-import { getTopicsByType, getUser, request } from '@/api/client';
+import { getTopicsByType } from '@/api/client';
 import { useAuth } from '@/context/AuthContext';
 
 // -------------------- Static Data --------------------
@@ -30,40 +30,13 @@ const questionTypes = [
 // ------------------------ Component ------------------------
 
 export default function Home() {
-  const [username, setUsername] = useState('User');
   const [selectedTopics, setSelectedTopics] = useState([]);
   const [selectedQuestionType, setSelectedQuestionType] = useState(null);
   const [availableTopics, setAvailableTopics] = useState([]);
   const [loadingTopics, setLoadingTopics] = useState(false);
   const [topicsError, setTopicsError] = useState('');
   const navigate = useNavigate();
-  const { openTokenExpiredModal } = useAuth();
-  
-  // Get userId from localStorage
-  const userId = parseInt(localStorage.getItem('brainloop_user_id')) || null;
-  const isLoggedIn = !!localStorage.getItem('brainloop_token');
-
-  // -------------------- Validate token on mount --------------------
-  useEffect(() => {
-    if (isLoggedIn) {
-      request('/auth/me')
-        .catch(() => {
-          // Token is invalid - modal will be shown by the request function
-        });
-    }
-  }, []);
-
-  // -------------------- Load user --------------------
-  useEffect(() => {
-    const storedUsername = localStorage.getItem('brainloop_user');
-    if (storedUsername) setUsername(storedUsername);
-
-    if (userId) {
-      getUser(userId)
-        .then((data) => data.username && setUsername(data.username))
-        .catch(() => {});
-    }
-  }, [userId]);
+  const { user } = useAuth(); // Use the user from AuthContext
 
   // -------------------- Topic Handling --------------------
   const toggleTopic = (topicId) => {
@@ -123,7 +96,7 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 flex flex-col items-center justify-center">
       <div className="max-w-2xl w-full mx-auto px-4 py-12 flex flex-col items-center">
         {/* If not logged in, show logo, description, and login/register */}
-        {!isLoggedIn ? (
+        {!user ? (
           <>
             <div className="mb-8">
               <Logo size={100} />
@@ -146,12 +119,12 @@ export default function Home() {
               <Logo size={70} />
             </div>
             <h1 className="text-4xl font-bold text-gray-900 mb-12 text-center">
-              Hello, {username}! <span role="img" aria-label="rocket">🚀</span>
+              Hello, {user.username}! <span role="img" aria-label="rocket">🚀</span>
             </h1>
           </>
         )}
         {/* If logged in, show practice options below greeting */}
-        {isLoggedIn && (
+        {user && (
           <div className="w-full mt-2">
             {/* Question Types */}
             <div className="mb-12">

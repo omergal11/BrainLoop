@@ -130,6 +130,3 @@ class CompleteSessionRequest(BaseModel):
     end_time: datetime | str | None = None
     correct_answers: int
 
-
-class StartSessionRequest(BaseModel):
-    pass

@@ -1,42 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { User, Mail, Calendar, Shield } from 'lucide-react';
-import { request } from '@/api/client';
 import { useAuth } from '@/context/AuthContext';
 
 export default function Profile() {
   const navigate = useNavigate();
-  const { openTokenExpiredModal } = useAuth();
-  const [userInfo, setUserInfo] = useState({
-    username: '',
-    email: '',
-    birthDate: '',
-    isAdmin: false
-  });
+  const { user } = useAuth(); // Use the user from AuthContext
 
-  useEffect(() => {
-    // Check if user is logged in
-    const token = localStorage.getItem('brainloop_token');
-    if (!token) {
-      navigate('/auth');
-      return;
-    }
-
-    // Validate token with backend
-    request('/auth/me')
-      .catch(() => {
-        // Token is invalid - modal will be shown by the request function
-      });
-
-    // Load user data from localStorage
-    const username = localStorage.getItem('brainloop_user') || '';
-    const email = localStorage.getItem('brainloop_email') || '';
-    const birthDate = localStorage.getItem('brainloop_birth_date') || '';
-    const isAdmin = localStorage.getItem('brainloop_is_admin') === 'true';
-
-    setUserInfo({ username, email, birthDate, isAdmin });
-  }, [navigate]);
+  if (!user) {
+    // This should ideally be handled by ProtectedRoute, but as a fallback:
+    navigate('/auth');
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
@@ -49,9 +25,9 @@ export default function Profile() {
               <User className="w-12 h-12 text-purple-500" />
             </div>
             <h2 className="text-3xl font-bold text-white mb-2">
-              {userInfo.username}
+              {user.username}
             </h2>
-            {userInfo.isAdmin && (
+            {user.is_admin && (
               <div className="inline-flex items-center gap-2 bg-yellow-400 text-yellow-900 px-4 py-2 rounded-full font-semibold">
                 <Shield className="w-5 h-5" />
                 ADMIN
@@ -67,7 +43,7 @@ export default function Profile() {
               </div>
               <div className="flex-1">
                 <p className="text-sm text-gray-600 font-medium">Username</p>
-                <p className="text-lg text-gray-900 font-semibold">{userInfo.username}</p>
+                <p className="text-lg text-gray-900 font-semibold">{user.username}</p>
               </div>
             </div>
 
@@ -77,7 +53,7 @@ export default function Profile() {
               </div>
               <div className="flex-1">
                 <p className="text-sm text-gray-600 font-medium">Email</p>
-                <p className="text-lg text-gray-900 font-semibold">{userInfo.email}</p>
+                <p className="text-lg text-gray-900 font-semibold">{user.email}</p>
               </div>
             </div>
 
@@ -88,12 +64,12 @@ export default function Profile() {
               <div className="flex-1">
                 <p className="text-sm text-gray-600 font-medium">Birth Date</p>
                 <p className="text-lg text-gray-900 font-semibold">
-                  {userInfo.birthDate ? new Date(userInfo.birthDate).toLocaleDateString('en-GB') : 'N/A'}
+                  {user.birth_date ? new Date(user.birth_date).toLocaleDateString('en-GB') : 'N/A'}
                 </p>
               </div>
             </div>
 
-            {userInfo.isAdmin && (
+            {user.is_admin && (
               <div className="flex items-center gap-4 p-4 bg-yellow-50 rounded-2xl border-2 border-yellow-200">
                 <div className="w-12 h-12 bg-yellow-200 rounded-xl flex items-center justify-center">
                   <Shield className="w-6 h-6 text-yellow-600" />

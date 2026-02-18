@@ -1,6 +1,6 @@
 # BrainLoop - Software Documentation
 
-**Version:** 1.0 | **Last Updated:** January 18, 2026 | **Language:** English & Hebrew
+**Version:** 1.0.1 | **Last Updated:** February 18, 2026 | **Language:** English & Hebrew
 
 ## 📖 Table of Contents
 1. [Overview](#overview)
@@ -31,42 +31,67 @@
 - **No ORM:** Direct SQL for better performance and control
 - **Modular Routes:** Separate files for auth, questions, quiz, and stats
 - **RESTful API:** Standard HTTP methods and status codes
-- **Parameterized Queries:** Protection against SQL injection
+- **Parameterized Queries:** 100% protection against SQL injection attacks
+- **Rate Limiting:** DoS and brute-force protection
+- **RBAC:** Role-Based Access Control (admin/user separation)
 
 ---
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    Frontend (React)                      │
-│         - User Interface (Tailwind CSS)                 │
-│         - Authentication Context                        │
-│         - API Client (Axios)                            │
-└──────────────────────┬──────────────────────────────────┘
-                       │ HTTP/REST
-┌──────────────────────▼──────────────────────────────────┐
-│                  Backend (FastAPI)                       │
-│  ┌────────────────┐  ┌────────────────────────────────┐ │
-│  │  auth.py       │  │   questions.py                 │ │
-│  │  quiz.py       │  │   stats.py                     │ │
-│  └────────────────┘  └────────────────────────────────┘ │
-│  ┌──────────────────────────────────────────────────┐  │
-│  │  database.py | dependencies.py | schemas.py     │  │
-│  └──────────────────────────────────────────────────┘  │
-└───────────────────────┬────────────────────────────────┘
-                        │ SQL
-┌───────────────────────▼────────────────────────────────┐
-│              MySQL Database (6 Tables)                  │
-│  Users | Topics | Questions | Learning_Sessions         │
-│  User_Answers | User_Strikes                            │
-└───────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                    Frontend (React)                              │
+│         - User Interface (Tailwind CSS)                         │
+│         - Authentication Context                                │
+│         - API Client (Axios)                                    │
+└──────────────────────────────┬──────────────────────────────────┘
+                               │ HTTPS/REST
+┌──────────────────────────────▼──────────────────────────────────┐
+│              SECURITY LAYER (API Gateway)                       │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  Rate Limiter (DoS Protection)                             │ │
+│  │  - Request throttling per IP/user                          │ │
+│  │  - Brute-force detection                                   │ │
+│  └────────────────────────────────────────────────────────────┘ │
+└──────────────────────────────┬──────────────────────────────────┘
+                               │
+┌──────────────────────────────▼──────────────────────────────────┐
+│              AUTHENTICATION LAYER (FastAPI)                     │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  JWT Token Validation (30-min expiry)                      │ │
+│  │  - Token signature verification                            │ │
+│  │  - Role-Based Access Control (RBAC)                        │ │
+│  │  - Bcrypt password verification                            │ │
+│  └────────────────────────────────────────────────────────────┘ │
+└──────────────────────────────┬──────────────────────────────────┘
+                               │
+┌──────────────────────────────▼──────────────────────────────────┐
+│              APPLICATION LAYER (FastAPI Routes)                │
+│  ┌────────────────┐  ┌────────────────────────────────────┐   │
+│  │  auth.py       │  │   questions.py                     │   │
+│  │  quiz.py       │  │   stats.py                         │   │
+│  └────────────────┘  └────────────────────────────────────┘   │
+│  ┌────────────────────────────────────────────────────────┐   │
+│  │  database.py | dependencies.py | schemas.py | limiter.py  │   │
+│  └────────────────────────────────────────────────────────┘   │
+└──────────────────────────────┬──────────────────────────────────┘
+                               │ Parameterized SQL Queries
+┌──────────────────────────────▼──────────────────────────────────┐
+│              DATABASE LAYER (MySQL 8.0)                         │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  6 Tables with Indexes | Foreign Keys | Referential Int.  │ │
+│  │  Users | Topics | Questions | Learning_Sessions            │ │
+│  │  User_Answers | User_Strikes                                │ │
+│  └────────────────────────────────────────────────────────────┘ │
+└────────────────────────────────────────────────────────────────┘
 ```
 
 **Components:**
 - **Frontend:** React 18 + Vite + Tailwind CSS
-- **Backend:** FastAPI (Python 3.10+) with modular routes
-- **Database:** MySQL 8.0 with 6 tables and strategic indexes
+- **Backend:** FastAPI (Python 3.10+) with modular routes + Rate Limiting middleware
+- **Database:** MySQL 8.0 with 6 tables, strategic indexes, and parameterized queries
+- **Security:** JWT (30-min expiry), Bcrypt hashing, RBAC, Rate Limiting, Parameterized SQL
 
 ---
 
@@ -78,6 +103,8 @@
 | | FastAPI | 0.104+ | Web framework |
 | | PyMySQL | 1.1+ | MySQL driver |
 | | PyJWT | 2.8+ | Token handling |
+| | Passlib (bcrypt) | 1.7+ | Password hashing |
+| | SlowAPI | 0.1+ | Rate limiting |
 | | python-dotenv | 1.0+ | Environment config |
 | **Frontend** | React | 18+ | UI framework |
 | | Vite | 5+ | Build tool |
@@ -118,10 +145,10 @@ CREATE TABLE `users` (
 - **Fields:**
   - `user_id` - Auto-incrementing primary key (INT)
   - `username` - Unique identifier for login (VARCHAR 50)
-  - `password` - User password (VARCHAR 100, currently plain text - TODO: bcrypt hashing)
+  - `password` - User password (VARCHAR 100, hashed with Bcrypt)
   - `email` - User email address (VARCHAR 100, nullable)
   - `birth_date` - Date of birth (DATE, nullable)
-  - `is_admin` - Admin flag (TINYINT, default: 0; 0 = regular user, 1 = admin)
+  - `is_admin` - Admin flag (TINYINT, default: 0; 0 = regular user, 1 = admin) - Used for RBAC
 
 #### Topics Table
 ```sql
@@ -336,6 +363,131 @@ CREATE TABLE `user_strikes` (
 | **User_Strikes** | user_id (PK/FK), current_streak_days, longest_streak, current_streak_start, last_activity_date | idx_current_streak, idx_longest_streak | Streak tracking and gamification |
 
 ---
+
+---
+
+## 🛡️ Security & Reliability (SRE Focus)
+
+### Security Features Implemented
+
+#### 1. **Identity & Access Management**
+- **JWT Authentication:** Modern token-based authentication using `PyJWT` with 30-minute expiry
+- **Bcrypt Password Hashing:** Industry-standard password hashing with salt (Passlib library)
+- **Role-Based Access Control (RBAC):** Admin vs regular user separation via `is_admin` flag
+  - Admin endpoints: `/admin/stats/overview` - data visibility control
+  - Regular user endpoints: `/stats/user` - personal stats only
+
+#### 2. **Infrastructure Protection**
+- **Rate Limiting:** SlowAPI middleware prevents:
+  - Brute-force attacks (login attempts)
+  - Distributed Denial of Service (DDoS) attacks
+  - API abuse (excessive requests)
+  - Rate: 100 requests per minute per IP address (configurable)
+
+#### 3. **Database Security**
+- **Parameterized Queries:** 100% SQL Injection protection
+  - All user input passed as parameters: `WHERE username = %s`
+  - SQL structure separated from data (never string concatenation)
+  - Prevents: `' OR '1'='1` type attacks
+- **Connection Pooling:** Managed MySQL connections with authentication
+- **Referential Integrity:** Foreign keys maintain data consistency
+
+#### 4. **Secrets Management**
+- **Environment Variables:** All sensitive data stored externally
+  - `MYSQL_PASSWORD`, `SECRET_KEY` - never in code
+  - `.env` file for local development
+  - Docker secrets for production
+- **No Hardcoded Credentials:** Dynamic configuration via `python-dotenv`
+
+#### 5. **Token Security**
+- **Expiration:** 30-minute JWT token lifetime
+- **Signature Verification:** HS256 algorithm with `SECRET_KEY`
+- **Payload:** Contains `user_id`, `username`, `is_admin` (immutable)
+
+#### 6. **Observability & Monitoring** (Coming Soon)
+- **Prometheus metrics:** Real-time security event tracking
+- **Grafana dashboards:** Failed login attempts, rate limit hits
+- **Audit logging:** Database query logging for compliance
+
+### Security Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────┐
+│              CLIENT REQUEST (HTTPS)                      │
+└────────────────────────┬────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────┐
+│        RATE LIMITER (100 req/min per IP)                │
+│  ✓ Throttles requests                                   │
+│  ✓ Blocks brute-force attacks                           │
+│  ✓ DDoS mitigation                                      │
+│  Returns: 429 Too Many Requests                         │
+└────────────────────────┬────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────┐
+│     JWT TOKEN VALIDATION & RBAC                          │
+│  ✓ Signature verification (HS256)                       │
+│  ✓ Token expiry check (30-min)                          │
+│  ✓ User role verification (admin/user)                  │
+│  ✓ Endpoint permission check                            │
+│  Returns: 401 Unauthorized | 403 Forbidden              │
+└────────────────────────┬────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────┐
+│     BCRYPT PASSWORD VERIFICATION (Login only)            │
+│  ✓ Hash comparison (never plain text)                   │
+│  ✓ Timing-safe comparison                                │
+│  Returns: 401 Unauthorized                              │
+└────────────────────────┬────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────┐
+│     REQUEST ROUTING & VALIDATION                         │
+│  ✓ Schema validation (Pydantic)                         │
+│  ✓ Input sanitization                                   │
+│  ✓ Error handling & logging                             │
+└────────────────────────┬────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────┐
+│     PARAMETERIZED SQL EXECUTION                          │
+│  ✓ All queries use placeholders (%s)                    │
+│  ✓ Data passed as separate parameters                   │
+│  ✓ SQL structure unchanged                              │
+│  ✓ 100% SQL Injection protected                         │
+│                                                         │
+│  Example: WHERE username = %s                           │
+│           (NOT: WHERE username = '" + username + "')    │
+└────────────────────────┬────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────┐
+│     DATABASE TRANSACTION & RESPONSE                      │
+│  ✓ Data returned securely                               │
+│  ✓ Sensitive data (passwords) excluded                  │
+│  ✓ Encrypted connection (MySQL over TCP)                │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Security Best Practices Checklist
+
+| Security Aspect | Status | Implementation |
+|-----------------|--------|----------------|
+| **Password Storage** | ✅ | Bcrypt hashing with salt |
+| **Token Expiry** | ✅ | 30-minute JWT expiration |
+| **SQL Injection** | ✅ | 100% Parameterized queries |
+| **Brute-Force** | ✅ | Rate limiting (100 req/min) |
+| **DDoS Protection** | ✅ | Rate limiting middleware |
+| **Secrets Storage** | ✅ | Environment variables only |
+| **RBAC** | ✅ | Admin/user role separation |
+| **Token Signature** | ✅ | HS256 with SECRET_KEY |
+| **HTTPS** | ✅ | Enforced in production |
+| **CORS** | ✅ | Restricted to frontend origin |
+| **Audit Logging** | 🔄 | Prometheus/Grafana (Coming Soon) |
+| **2FA** | 🔄 | Future enhancement |
 
 ---
 

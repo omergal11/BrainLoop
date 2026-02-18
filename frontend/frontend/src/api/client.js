@@ -79,6 +79,9 @@ export async function getUserStreak(userId) {
 export async function getUser(userId) {
   return request(`/user/${userId}`);
 }
+export async function getMe() {
+  return request('/auth/me');
+}
 
 export async function completeSession(correctAnswers, endTime = null, startTime = null) {
   return request('/complete-session', {
