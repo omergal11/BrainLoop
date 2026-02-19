@@ -10,7 +10,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
-from database import get_connection, DB_TYPE
+from database import get_connection
 
 # Load from environment variables
 ALGORITHM = "RS256"
@@ -96,12 +96,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
         raise HTTPException(status_code=401, detail="Could not validate credentials")
 
     cursor = db.cursor()
-    if DB_TYPE == 'mysql':
-        sql = "SELECT * FROM users WHERE user_id = %s"
-    else:
-        sql = "SELECT * FROM users WHERE user_id = %s"
-
-    cursor.execute(sql, (int(user_id),))
+    cursor.execute("SELECT * FROM users WHERE user_id = %s", (int(user_id),))
     user_row = cursor.fetchone()
 
     if user_row is None:

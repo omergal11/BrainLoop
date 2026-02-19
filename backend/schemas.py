@@ -120,6 +120,7 @@ class UserResponse(BaseModel):
     username: str
     email: str
     birth_date: date
+    is_admin: bool
 
     class Config:
         from_attributes = True

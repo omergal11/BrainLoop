@@ -28,7 +28,6 @@ async function request(path, options = {}) {
 
   if (res.status === 401) {
     // Token expired or invalid - show the modal
-    console.error('Token expired or invalid (401)');
     if (tokenExpiredCallback) {
       tokenExpiredCallback();
     }
@@ -38,7 +37,6 @@ async function request(path, options = {}) {
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     const errorMsg = `API ${res.status}: ${text || res.statusText}`;
-    console.error('API Error:', errorMsg);
     throw new Error(errorMsg);
   }
   return res.json();
@@ -71,14 +69,6 @@ export const submitAnswer = async (questionId, answer, userId) => {
   });
 };
 
-
-export async function getUserStreak(userId) {
-  return request(`/user/${userId}/streak`);
-}
-
-export async function getUser(userId) {
-  return request(`/user/${userId}`);
-}
 export async function getMe() {
   return request('/auth/me');
 }

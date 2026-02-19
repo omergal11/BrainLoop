@@ -31,9 +31,6 @@ export default function AdminStats() {
       const startTime = performance.now();
       try {
         const payload = await request('/admin/stats/overview');
-        const endTime = performance.now();
-        const loadTime = (endTime - startTime).toFixed(2);
-        console.log(`✅ Admin stats loaded in ${loadTime}ms`);
         setData(payload);
       } catch (err) {
         console.error('Error fetching admin stats:', err);

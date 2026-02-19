@@ -39,9 +39,7 @@ export default function LearnStats() {
   // Refresh stats when user navigates back from quiz
   useEffect(() => {
     const handleVisibilityChange = () => {
-      console.log('👀 Visibility changed:', document.visibilityState);
       if (document.visibilityState === 'visible') {
-        console.log('🔄 Tab became visible, refreshing stats...');
         fetchStats();
       }
     };
