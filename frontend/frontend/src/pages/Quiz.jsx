@@ -128,12 +128,9 @@ export default function Quiz() {
   useEffect(() => {
     // Guard: prevent multiple initializations
     if (hasInitialized.current) {
-      console.log('⚠️ Quiz component already initialized');
       return;
     }
     hasInitialized.current = true;
-
-    console.log('[QUIZ-INIT] Loading questions (NOT starting session yet)');
 
     const topics = JSON.parse(localStorage.getItem('brainloop_topics') || '[]');
     const questionType = localStorage.getItem('brainloop_question_type');
@@ -281,10 +278,8 @@ export default function Quiz() {
     } else {
       // Session completed - update streak and end learning session
       try {
-        console.log('📤 Calling completeSession...');
         const endTime = new Date();
         const result = await completeSession(correctAnswersCount, endTime.toISOString(), sessionStartTime.toISOString());
-        console.log('✅ completeSession result:', result);
       } catch (err) {
         console.error('❌ Failed to complete session:', err);
       }
@@ -321,10 +316,8 @@ export default function Quiz() {
 
     // Complete the session
     try {
-      console.log('📤 Calling completeSession from skip...');
       const endTime = new Date();
       const result = await completeSession(correctAnswersCount, endTime.toISOString(), sessionStartTime.toISOString());
-      console.log('✅ completeSession result:', result);
     } catch (err) {
       console.error('❌ Failed to complete session:', err);
     }

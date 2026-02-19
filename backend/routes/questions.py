@@ -149,38 +149,6 @@ def get_random_questions(
     return _random_batch_query(type, topics, limit, db)
 
 
-@router.get("/topics/code", response_model=List[TopicPublicSchema])
-def get_code_topics(db = Depends(get_db), current_user: dict = Depends(get_current_user)) -> List[TopicPublicSchema]:
-    cursor = db.cursor()
-    try:
-        cursor.execute("""
-            SELECT DISTINCT t.topic_id, t.name
-            FROM topics t
-            JOIN questions q ON q.topic_id = t.topic_id
-            WHERE q.type = 'code' AND t.topic_id IS NOT NULL
-        """)
-        results = cursor.fetchall()
-        return [TopicPublicSchema(topic_id=row['topic_id'], name=row['name']) for row in results]
-    finally:
-        cursor.close()
-
-
-@router.get("/topics/multiple-choice", response_model=List[TopicPublicSchema])
-def get_multiple_choice_topics(db = Depends(get_db), current_user: dict = Depends(get_current_user)) -> List[TopicPublicSchema]:
-    cursor = db.cursor()
-    try:
-        cursor.execute("""
-            SELECT DISTINCT t.topic_id, t.name
-            FROM topics t
-            JOIN questions q ON q.topic_id = t.topic_id
-            WHERE q.type = 'choose' AND t.topic_id IS NOT NULL
-        """)
-        results = cursor.fetchall()
-        return [TopicPublicSchema(topic_id=row['topic_id'], name=row['name']) for row in results]
-    finally:
-        cursor.close()
-
-
 @topics_router.get("/topics/code", response_model=List[TopicPublicSchema])
 def get_code_topics_root(db = Depends(get_db), current_user: dict = Depends(get_current_user)) -> List[TopicPublicSchema]:
     cursor = db.cursor()

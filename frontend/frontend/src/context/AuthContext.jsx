@@ -13,7 +13,10 @@ export function AuthProvider({ children }) {
     if (token) {
       try {
         const userData = await getMe(); 
-        setUser(userData);
+        setUser({
+          ...userData,
+          isAdmin: userData.is_admin || userData.isAdmin || false
+        });
       } catch (error) {
         setToken(null); // Invalid token
         setUser(null);

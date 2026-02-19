@@ -1,13 +1,20 @@
 import { Brain, BarChart3, Home, User, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/context/AuthContext';
 
-export default function Header({ streak, isLoggedIn, isAdmin, navigate }) {
+export default function Header() {
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  
+  const isLoggedIn = !!user;
+  // Check both is_admin (from API) and isAdmin (from context)
+  const isAdmin = user?.is_admin || user?.isAdmin || false;
+  const streak = user?.streak || 0;
+
   const handleLogout = () => {
-    localStorage.removeItem('brainloop_token');
-    localStorage.removeItem('brainloop_user');
-    localStorage.removeItem('brainloop_is_admin');
+    logout();
     navigate('/auth');
-    window.location.reload();
   };
 
   return (

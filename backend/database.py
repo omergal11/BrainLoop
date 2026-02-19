@@ -1,14 +1,7 @@
 import os
-from pathlib import Path
-import mysql.connector
 from mysql.connector import pooling
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
 DB_TYPE = os.getenv('DB_TYPE', 'mysql').lower()
-
-BASE_DIR = Path(__file__).resolve().parents[1]
-DB_PATH = BASE_DIR / "db" / "brainloop.db"
 
 MYSQL_CONFIG = {
     'host': os.getenv('MYSQL_HOST', 'localhost'),
@@ -16,24 +9,6 @@ MYSQL_CONFIG = {
     'password': os.getenv('MYSQL_PASSWORD'),
     'database': os.getenv('MYSQL_DB', 'brainloop'),
 }
-
-if DB_TYPE == 'mysql':
-    db_url = f"mysql+pymysql://{MYSQL_CONFIG['user']}:{MYSQL_CONFIG['password']}@{MYSQL_CONFIG['host']}/{MYSQL_CONFIG['database']}"
-    engine = create_engine(
-        db_url,
-        pool_pre_ping=True,
-        pool_recycle=3600,
-        echo=False
-    )
-else:
-    db_url = f"sqlite:///{DB_PATH}"
-    engine = create_engine(
-        db_url,
-        connect_args={"check_same_thread": False},
-        echo=False
-    )
-
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 _connection_pool = None
 
@@ -51,7 +26,7 @@ def get_mysql_pool():
     return _connection_pool
 
 def get_connection():
-    """Get a database connection based on DB_TYPE (raw connection, not SQLAlchemy)"""
+    """Get a database connection based on DB_TYPE (raw connection)"""
     if DB_TYPE == 'mysql':
         pool = get_mysql_pool()
         conn = pool.get_connection()
@@ -61,8 +36,10 @@ def get_connection():
         conn.cursor = get_dict_cursor
         return conn
     else:
+        # Fallback to SQLite if needed (for testing)
         import sqlite3
-        conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
+        db_path = os.getenv('SQLITE_DB', 'brainloop.db')
+        conn = sqlite3.connect(db_path, check_same_thread=False)
         conn.row_factory = sqlite3.Row
         return conn
 
