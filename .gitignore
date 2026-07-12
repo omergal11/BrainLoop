@@ -4,6 +4,10 @@ venv/
 env/
 ENV/
 
+# RSA keypair used to sign JWTs - generate locally with key_generator.py
+backend/private_key.pem
+backend/public_key.pem
+
 # Environment variables
 .env
 .env.local
