@@ -93,6 +93,9 @@ export default function Quiz() {
   const [userAnswer, setUserAnswer] = useState('');
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
+  const [revealedAnswer, setRevealedAnswer] = useState('');
+  const [revealedAnswerLabel, setRevealedAnswerLabel] = useState('');
+  const [checkError, setCheckError] = useState('');
   const [score, setScore] = useState(0);
   const [correctAnswersCount, setCorrectAnswersCount] = useState(0); // Count correct answers
   const [showResults, setShowResults] = useState(false);
@@ -103,8 +106,6 @@ export default function Quiz() {
   const navigate = useNavigate();
   const { openTokenExpiredModal } = useAuth();
   const hasInitialized = useRef(false); // Prevent duplicate initializations
-  
-  const storedUserId = 194; // For development
 
   // Validate token on mount
   useEffect(() => {
@@ -134,7 +135,6 @@ export default function Quiz() {
 
     const topics = JSON.parse(localStorage.getItem('brainloop_topics') || '[]');
     const questionType = localStorage.getItem('brainloop_question_type');
-    const storedUserId = localStorage.getItem('brainloop_user_id');
 
     if (topics.length === 0 || !questionType) {
       navigate('/home');
@@ -165,9 +165,6 @@ export default function Quiz() {
           const options = optionTexts
             .map((text, idx) => ({ value: letters[idx], label: text }))
             .filter((o) => !!o.label);
-
-          const correctLetter = (q.correct_answer || '').trim().toUpperCase();
-          const correctLabel = options.find((o) => o.value === correctLetter)?.label || q.correct_answer;
 
           // Use backend-provided code and imports if available, otherwise fall back to frontend extraction
           let prompt, code, code_imports;
@@ -209,8 +206,6 @@ export default function Quiz() {
             code,
             code_imports,
             options,
-            correctAnswer: correctLetter || correctLabel,
-            correctAnswerLabel: correctLabel,
             topicId: q.topic_id,
           };
         });
@@ -227,15 +222,22 @@ export default function Quiz() {
   const handleCheckAnswer = async () => {
   if (submitting) return;
   setSubmitting(true);
-
-  const fallbackCorrect =
-    (userAnswer || '').toLowerCase().trim() ===
-    (currentQuestion.correctAnswer || '').toLowerCase().trim();
+  setCheckError('');
 
   let correct = false;
+  let answered = false;
   try {
     const res = await submitAnswer(currentQuestion.id, userAnswer);
     correct = !!res?.is_correct;
+    answered = true;
+
+    const correctValue = (res?.correct_answer || '').trim();
+    const matchingOption = currentQuestion.options.find(
+      (o) => o.value.toUpperCase() === correctValue.toUpperCase()
+    );
+    setRevealedAnswer(correctValue);
+    setRevealedAnswerLabel(matchingOption?.label || correctValue);
+
     setIsCorrect(correct);
     setShowFeedback(true);
     if (correct) {
@@ -243,27 +245,23 @@ export default function Quiz() {
       setCorrectAnswersCount((c) => c + 1); // Increment correct count
     }
   } catch (err) {
-    correct = fallbackCorrect;
-    setIsCorrect(fallbackCorrect);
-    setShowFeedback(true);
-    if (fallbackCorrect) {
-      setScore((s) => s + 1);
-      setCorrectAnswersCount((c) => c + 1); // Increment correct count
-    }
+    setCheckError(err.message || 'Failed to check answer. Please try again.');
   } finally {
-    const topicId = currentQuestion.topicId;
-    const topicName = topicMap[topicId] || `Topic ${topicId}`; 
+    if (answered) {
+      const topicId = currentQuestion.topicId;
+      const topicName = topicMap[topicId] || `Topic ${topicId}`;
 
-    setTopicStats(prev => {
-      const currentStats = prev[topicName] || { correct: 0, total: 0 };
-      return {
-        ...prev,
-        [topicName]: {
-          correct: currentStats.correct + (correct ? 1 : 0),
-          total: currentStats.total + 1
-        }
-      };
-    });
+      setTopicStats(prev => {
+        const currentStats = prev[topicName] || { correct: 0, total: 0 };
+        return {
+          ...prev,
+          [topicName]: {
+            correct: currentStats.correct + (correct ? 1 : 0),
+            total: currentStats.total + 1
+          }
+        };
+      });
+    }
 
     setSubmitting(false);
   }
@@ -275,6 +273,8 @@ export default function Quiz() {
       setUserAnswer('');
       setShowFeedback(false);
       setIsCorrect(false);
+      setRevealedAnswer('');
+      setRevealedAnswerLabel('');
     } else {
       // Session completed - update streak and end learning session
       try {
@@ -292,8 +292,10 @@ export default function Quiz() {
     setUserAnswer('');
     setShowFeedback(false);
     setIsCorrect(false);
+    setRevealedAnswer('');
+    setRevealedAnswerLabel('');
     setScore(0);
-    setTopicStats({}); 
+    setTopicStats({});
     setShowResults(false);
   };
 
@@ -387,6 +389,7 @@ export default function Quiz() {
               userAnswer={userAnswer}
               setUserAnswer={setUserAnswer}
               showFeedback={showFeedback}
+              correctAnswer={revealedAnswer}
             />
           )}
           {currentQuestion.type === 'code' && (
@@ -424,7 +427,7 @@ export default function Quiz() {
                   <p className="text-sm text-gray-600 mt-1">
                     The correct answer is:{' '}
                     <span className="font-medium">
-                      {currentQuestion.correctAnswerLabel || currentQuestion.correctAnswer}
+                      {revealedAnswerLabel}
                     </span>
                   </p>
                 )}
@@ -432,6 +435,10 @@ export default function Quiz() {
             </div>
           )}
         </div>
+
+        {checkError && !showFeedback && (
+          <p className="text-center text-sm text-red-600 mb-4">{checkError}</p>
+        )}
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">

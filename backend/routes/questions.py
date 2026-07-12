@@ -135,16 +135,7 @@ def get_random_batch(
     topics: str = Query("", description="Comma-separated topic IDs"),
     limit: int = Query(10, ge=1, le=50),
     db = Depends(get_db),
-) -> List[QuestionSchema]:
-    return _random_batch_query(type, topics, limit, db)
-
-
-@router.get("/random-questions-batch", response_model=List[QuestionSchema])
-def get_random_questions(
-    type: str = Query(..., description="Question type, e.g. code or choose"),
-    topics: str = Query("", description="Comma-separated topic IDs"),
-    limit: int = Query(10, ge=1, le=50),
-    db = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
 ) -> List[QuestionSchema]:
     return _random_batch_query(type, topics, limit, db)
 

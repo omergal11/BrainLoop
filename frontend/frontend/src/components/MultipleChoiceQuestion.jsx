@@ -7,6 +7,7 @@ export default function MultipleChoiceQuestion({
   userAnswer,
   setUserAnswer,
   showFeedback,
+  correctAnswer,
 }) {
   return (
     <div>
@@ -31,7 +32,7 @@ export default function MultipleChoiceQuestion({
       <RadioGroup value={userAnswer} onValueChange={setUserAnswer} className="space-y-3">
         {question.options.map((option) => {
           const isSelected = userAnswer === option.value;
-          const isCorrect = option.value === question.correctAnswer;
+          const isCorrect = option.value === correctAnswer;
           const isWrongSelection = showFeedback && isSelected && !isCorrect;
 
           return (

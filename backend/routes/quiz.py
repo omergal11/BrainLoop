@@ -28,7 +28,10 @@ def get_random_questions(type: str = Query(...), topics: str = Query(""), limit:
                 "SELECT * FROM questions WHERE type = %s ORDER BY RAND() LIMIT %s",
                 (type, limit)
             )
-        return cursor.fetchall()
+        rows = cursor.fetchall()
+        for row in rows:
+            row.pop("correct_answer", None)
+        return rows
     finally:
         cursor.close()
 
@@ -55,7 +58,11 @@ def submit_answer(payload: SubmitAnswerRequest, db = Depends(get_db), current_us
         )
         db.commit()
         
-        return SubmitAnswerResponse(question_id=question['q_id'], is_correct=is_correct)
+        return SubmitAnswerResponse(
+            question_id=question['q_id'],
+            is_correct=is_correct,
+            correct_answer=question['correct_answer'] or ""
+        )
     finally:
         cursor.close()
 

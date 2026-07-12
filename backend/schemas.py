@@ -84,6 +84,7 @@ class SubmitAnswerRequest(BaseModel):
 class SubmitAnswerResponse(BaseModel):
     question_id: int
     is_correct: bool
+    correct_answer: str
 
 
 class TopicPublicSchema(BaseModel):
