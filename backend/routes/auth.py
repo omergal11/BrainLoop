@@ -10,6 +10,7 @@ from dependencies import get_db, create_access_token, create_refresh_token, get_
 from schemas import LoginRequest, LoginResponse, UserCreateRequest, UserResponse, UpdatePasswordRequest
 from metrics import LOGIN_FAILURES
 from limiter import limiter
+from encryption import encrypt_field, decrypt_field, hash_for_lookup
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 user_router = APIRouter(tags=["users"])
@@ -39,15 +40,17 @@ def create_user(request: Request, payload: UserCreateRequest, db = Depends(get_d
         cursor.execute("SELECT user_id FROM users WHERE username = %s", (payload.username,))
         if cursor.fetchone():
             raise HTTPException(status_code=400, detail="Username already exists")
-        
-        cursor.execute("SELECT user_id FROM users WHERE email = %s", (payload.email,))
+
+        email_hash = hash_for_lookup(payload.email)
+        cursor.execute("SELECT user_id FROM users WHERE email_hash = %s", (email_hash,))
         if cursor.fetchone():
             raise HTTPException(status_code=400, detail="Email already exists")
-        
+
         hashed_password = hash_password(payload.password)
+        encrypted_email = encrypt_field(payload.email)
         cursor.execute(
-            "INSERT INTO users (username, email, password, birth_date, is_admin) VALUES (%s, %s, %s, %s, %s)",
-            (payload.username, payload.email, hashed_password, payload.birthdate, False)
+            "INSERT INTO users (username, email, email_hash, password, birth_date, is_admin) VALUES (%s, %s, %s, %s, %s, %s)",
+            (payload.username, encrypted_email, email_hash, hashed_password, payload.birthdate, False)
         )
         db.commit()
         user_id = cursor.lastrowid
@@ -101,7 +104,7 @@ def login(request: Request, payload: LoginRequest, db = Depends(get_db)):
         return LoginResponse(
             user_id=user_id,
             username=user_row['username'],
-            email=user_row['email'],
+            email=decrypt_field(user_row['email']),
             birth_date=user_row['birth_date'],
             is_admin=user_row['is_admin'],
             access_token=access_token,
@@ -147,7 +150,7 @@ def update_password(request: Request, payload: UpdatePasswordRequest, db = Depen
         return LoginResponse(
             user_id=user_id,
             username=user_row['username'],
-            email=user_row['email'],
+            email=decrypt_field(user_row['email']),
             birth_date=user_row['birth_date'],
             is_admin=user_row['is_admin'],
             access_token=access_token,
@@ -160,4 +163,4 @@ def update_password(request: Request, payload: UpdatePasswordRequest, db = Depen
 @router.get("/me", response_model=UserResponse)
 def get_current_user_info(current_user: dict = Depends(get_current_user)):
     """Get current authenticated user info"""
-    return current_user
+    return current_user  # email is already decrypted by get_current_user

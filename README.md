@@ -75,6 +75,13 @@ SECRET_KEY=your-custom-secret-key
 ```
 Otherwise, sensible defaults are used automatically.
 
+**Required for email encryption:** the backend won't start without these two keys set (in `backend/.env` or your environment):
+```env
+FIELD_ENCRYPTION_KEY=<generate with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())">
+FIELD_HASH_KEY=<generate with: python -c "import secrets; print(secrets.token_hex(32))">
+```
+If you're upgrading an existing database, apply `db/migration_encrypt_email.sql` first, then run `python backend/scripts/backfill_encrypt_emails.py` once to encrypt any existing plaintext emails.
+
 ---
 
 ## � For Local Development (Without Docker)
@@ -206,9 +213,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Identity & Access:** Modern JWT authentication using `PyJWT` with secure RBAC (Role-Based Access Control)
 - **Infrastructure Protection:** Built-in Rate Limiting to mitigate Brute-Force and DoS attacks
 - **Database Security:** 100% Parameterized SQL queries to prevent SQL Injection
+- **Data Encryption:** User emails are encrypted at rest (Fernet/AES) with a separate deterministic hash column for uniqueness lookups - see `backend/encryption.py`
 - **Secrets Management:** Environment-based configuration (no credentials in code)
 - **Token Security:** 30-minute JWT token expiry with automatic refresh
-- **Observability:** (Coming Soon) Real-time monitoring with Prometheus & Grafana
+- **Observability:** Real-time monitoring with Prometheus (via `prometheus-fastapi-instrumentator`, including a custom failed-login counter)
 
 ### Security Architecture Diagram
 

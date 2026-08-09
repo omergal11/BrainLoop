@@ -55,6 +55,7 @@ def create_indexes():
         ('idx_user_answers_correct', 'User_Answers', 'user_id, is_correct'),
         ('idx_questions_id', 'Questions', 'q_id'),
         ('idx_questions_topic_id', 'Questions', 'topic_id'),
+        ('idx_users_email_hash', 'users', 'email_hash'),
     ]
     
     try:

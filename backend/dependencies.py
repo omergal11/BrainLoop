@@ -11,6 +11,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 
 from database import get_connection
+from encryption import decrypt_field
 
 # Load from environment variables
 ALGORITHM = "RS256"
@@ -102,4 +103,5 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     if user_row is None:
         raise HTTPException(status_code=401, detail="User not found")
 
+    user_row["email"] = decrypt_field(user_row["email"])
     return user_row
