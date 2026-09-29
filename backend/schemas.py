@@ -132,3 +132,12 @@ class CompleteSessionRequest(BaseModel):
     end_time: datetime | str | None = None
     correct_answers: int
 
+
+class AskAIRequest(BaseModel):
+    question: str
+
+
+class AskAIResponse(BaseModel):
+    answer: str
+    sources: list[str]
+

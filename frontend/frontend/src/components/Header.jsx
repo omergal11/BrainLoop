@@ -1,4 +1,4 @@
-import { Brain, BarChart3, Home, User, LogOut } from 'lucide-react';
+import { Brain, BarChart3, Home, User, LogOut, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
@@ -50,6 +50,18 @@ export default function Header() {
                 onClick={() => navigate('/stats')}
               >
                 <BarChart3 className="h-5 w-5" />
+              </Button>
+            )}
+
+            {/* Ask the Course - only when logged in */}
+            {isLoggedIn && (
+              <Button
+                variant="ghost"
+                size="icon"
+                title="Ask the Course"
+                onClick={() => navigate('/ask-ai')}
+              >
+                <Sparkles className="h-5 w-5 text-purple-500" />
               </Button>
             )}
 

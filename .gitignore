@@ -52,6 +52,9 @@ logs/
 *.sqlite
 *.sqlite3
 
+# RAG index - generated locally via backend/scripts/build_rag_index.py
+backend/rag_index.pkl
+
 # OS files
 .DS_Store
 .DS_Store?

@@ -6,6 +6,7 @@ import Profile from '@/pages/Profile';
 import Auth from '@/pages/Auth';
 import LearnStats from '@/pages/LearnStats';
 import AdminStats from '@/pages/AdminStats';
+import AskAI from '@/pages/AskAI';
 import Header from '@/components/Header';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import TokenExpiredModal from '@/components/TokenExpiredModal';
@@ -36,9 +37,13 @@ function AppLayout() {
           path="/profile"
           element={<ProtectedRoute><Profile /></ProtectedRoute>}
         />
-        <Route 
+        <Route
           path="/stats"
           element={<ProtectedRoute><LearnStats /></ProtectedRoute>}
+        />
+        <Route
+          path="/ask-ai"
+          element={<ProtectedRoute><AskAI /></ProtectedRoute>}
         />
         <Route 
           path="/admin/stats"

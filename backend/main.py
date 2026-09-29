@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from database import create_indexes, get_connection
-from routes import auth, questions, stats, quiz
+from routes import auth, questions, stats, quiz, ai
 from limiter import limiter
 
 def custom_rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
@@ -63,6 +63,7 @@ app.include_router(questions.router)
 app.include_router(questions.topics_router)
 app.include_router(quiz.router)
 app.include_router(stats.router)
+app.include_router(ai.router, prefix="/ai", tags=["AI"])
 
 
 @app.get("/")
